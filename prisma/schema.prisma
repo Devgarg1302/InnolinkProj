@@ -1,0 +1,290 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+}
+
+enum ProjectStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ONGOING
+  COMPLETED
+}
+
+enum ProjectType {
+  CAPSTONE
+  THAPAR
+  R_D
+  INTERNATIONAL
+  RESEARCH
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum NotificationType {
+  PROJECT_APPROVAL
+  PROJECT_REJECTION
+  CONNECTION_REQUEST
+  PROJECT_UPDATE
+  MENTORSHIP_REQUEST
+}
+
+// Base User model with common fields
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String
+  username    String
+  role        String?
+  bio         String?
+  avatarUrl   String?
+  department  String?
+  phoneNumber String?
+  location    String?
+  website     String?
+  resetToken  String?  @unique
+  resetTokenExpiry DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  experiences    Experience[]
+  certifications Certification[]
+  notifications  Notification[]
+  student        Student?
+  teacher        Teacher?
+
+  @@map("users")
+}
+
+// Student specific model
+model Student {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  year       Int?
+  rollNumber String?  @unique
+  skills     String[]
+
+  // Student specific relations
+  teamMemberships     TeamMember[]
+  connectionRequester Connection[] @relation("ConnectionRequester")
+  connectionReceiver  Connection[] @relation("ConnectionReceiver")
+  ledProjects         Project[]    @relation("ProjectLeadership")
+
+  @@map("students")
+}
+
+// Teacher specific model
+model Teacher {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  designation String?
+  skills      String[]
+
+  // Teacher specific relations
+  mentoredProjects Project[]  @relation("ProjectMentorship")
+  approvals        Approval[] @relation("MentorApprovals")
+
+  @@map("teachers")
+}
+
+// Update Project model relations
+model Project {
+  id          String        @id @default(uuid())
+  title       String
+  description String
+  status      ProjectStatus @default(PENDING)
+  type        ProjectType?
+  githubLink  String?
+  startDate   DateTime?
+  endDate     DateTime?
+
+  // Updated relationships
+  team     Team?    @relation(fields: [teamId], references: [id])
+  teamId   String?
+  mentor   Teacher? @relation("ProjectMentorship", fields: [mentorId], references: [id])
+  mentorId String?
+  lead     Student  @relation("ProjectLeadership", fields: [leadId], references: [id])
+  leadId   String
+
+  // Related content
+  researchPapers ResearchPaper[]
+  media          Media[]
+  approvals      Approval[]
+  notifications  Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("projects")
+}
+
+// Update TeamMember model relations
+model TeamMember {
+  id       String    @id @default(uuid())
+  role     String    @default("MEMBER")
+  joinedAt DateTime  @default(now())
+  leftAt   DateTime?
+
+  // Updated relationships
+  team      Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId    String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String
+
+  @@unique([studentId, teamId])
+  @@map("team_members")
+}
+
+// Update Experience model relations
+model Experience {
+  id          String    @id @default(uuid())
+  position    String
+  company     String
+  startDate   DateTime
+  endDate     DateTime?
+  description String?
+  isCurrent   Boolean   @default(false)
+  location    String?
+
+  // Updated relationships
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@map("experiences")
+}
+
+// Update Certification model relations
+model Certification {
+  id            String    @id @default(uuid())
+  title         String
+  issuer        String
+  issueDate     DateTime
+  expiryDate    DateTime?
+  credentialId  String?
+  credentialUrl String?
+  description   String?
+  isVerified    Boolean   @default(false)
+
+  // Updated relationships
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@map("certifications")
+}
+
+// Update Connection model relations
+model Connection {
+  id      String           @id @default(uuid())
+  status  ConnectionStatus @default(PENDING)
+  message String?
+
+  // Updated relationships
+  requester   Student @relation("ConnectionRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  requesterId String
+  receiver    Student @relation("ConnectionReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([requesterId, receiverId])
+  @@map("connections")
+}
+
+// Update Notification model relations
+model Notification {
+  id      String           @id @default(uuid())
+  type    NotificationType
+  message String
+  read    Boolean          @default(false)
+
+  // Updated relationships
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectId String?
+
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+model ResearchPaper {
+  id          String    @id @default(uuid())
+  title       String
+  authors     String[] // Array of author names
+  abstract    String?
+  url         String
+  publishedAt DateTime?
+
+  // Relationships
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  @@map("research_papers")
+}
+
+model Media {
+  id          String  @id @default(uuid())
+  url         String
+  type        String // e.g., IMAGE, VIDEO, DOCUMENT
+  title       String?
+  description String?
+
+  // Relationships
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  createdAt DateTime @default(now())
+
+  @@map("media")
+}
+
+model Approval {
+  id      String  @id @default(uuid())
+  status  String  @default("PENDING") // PENDING, APPROVED, REJECTED
+  comment String? // Mentor's feedback or comments
+
+  // Relationships
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  mentor    Teacher @relation("MentorApprovals", fields: [mentorId], references: [id], onDelete: Cascade)
+  mentorId  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("approvals")
+}
+
+// Team model
+model Team {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+
+  // Relationships
+  projects  Project[] // A team can work on multiple projects
+  members   TeamMember[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("teams")
+}
