@@ -66,9 +66,7 @@ type Project = {
 };
 
 export default function DashboardProjectsPage() {
-  const { data: session } = useSession();
   const searchParams = useSearchParams();
-  const router = useRouter();
   
   // Get status filter from URL
   const statusFilter = searchParams.get('status') || 'all';

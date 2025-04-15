@@ -5,7 +5,7 @@ import { authoptions } from '@/app/lib/auth';
 
 const prisma = new PrismaClient();
 
-export async function PUT(request: Request) {
+export async function PUT() {
   try {
     const session = await getServerSession(authoptions);
     

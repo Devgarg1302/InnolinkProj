@@ -48,7 +48,7 @@ export default function ProjectApproval({ projectId, projectStatus, isMentor }: 
             );
             window.location.reload();
         } catch (err) {
-            toast.error('Failed to process project approval');
+            toast.error('Failed to process project approval' + (err instanceof Error ? `: ${err.message}` : ''));
         } finally {
             setLoading(false);
         }

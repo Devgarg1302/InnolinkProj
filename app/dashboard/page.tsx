@@ -5,7 +5,7 @@ import { authoptions } from '../lib/auth';
 export default async function DashboardPage() {
   const session = await getServerSession(authoptions);
 
-  
+
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -18,8 +18,8 @@ export default async function DashboardPage() {
               Manage your projects and connect with collaborators
             </p>
           </div>
-          <Link 
-            href="/dashboard/projects/new" 
+          <Link
+            href="/dashboard/projects/new"
             className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-2">
@@ -151,7 +151,7 @@ export default async function DashboardPage() {
                   </div>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm text-gray-900">Your project "Machine Learning for Crop Yield Prediction" has been approved.</p>
+                  <p className="text-sm text-gray-900">Your project Machine Learning for Crop Yield Prediction has been approved.</p>
                   <p className="mt-1 text-xs text-gray-500">3 hours ago</p>
                 </div>
               </div>

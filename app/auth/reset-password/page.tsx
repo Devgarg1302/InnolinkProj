@@ -57,7 +57,7 @@ export default function ResetPasswordPage() {
                 }
             } catch (error) {
                 setIsValidToken(false);
-                setError('Failed to validate reset token');
+                setError(`'Failed to validate reset token' ${error}`);
             }
         };
 
@@ -99,7 +99,7 @@ export default function ResetPasswordPage() {
                 router.push('/auth/login?reset=success');
             }, 3000);
         } catch (error) {
-            setError('An error occurred. Please try again.');
+            setError(`'An error occurred. Please try again.' ${error}`);
         } finally {
             setIsLoading(false);
         }

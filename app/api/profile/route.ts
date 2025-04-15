@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authoptions } from '@/app/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { Experience, Certification } from '@/app/types/profile';
 
 export async function GET() {
     try {
@@ -123,7 +124,7 @@ export async function PUT(request: Request) {
 
             // Create new experiences
             await prisma.experience.createMany({
-                data: data.experiences.map((exp: any) => ({
+                data: data.experiences.map((exp: Experience) => ({
                     userId: user.id,
                     position: exp.position,
                     company: exp.company,
@@ -143,7 +144,7 @@ export async function PUT(request: Request) {
 
             // Create new certifications
             await prisma.certification.createMany({
-                data: data.certifications.map((cert: any) => ({
+                data: data.certifications.map((cert: Certification) => ({
                     userId: user.id,
                     title: cert.title,
                     issuer: cert.issuer,

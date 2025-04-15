@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     // Get filter parameter (my or all)
     const searchParams = request.nextUrl.searchParams;
     const filter = searchParams.get('status') || 'all';
-    
+
     // Get current user with role details
     const user = await prisma.user.findUnique({
       where: { email: session.user.email as string },
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     if (filter === 'my') {
       // Find all teams where user is a member
       let teamIds: string[] = [];
-      
+
       if (user.student) {
         const teamMemberships = await prisma.teamMember.findMany({
           where: {
@@ -94,10 +94,10 @@ export async function GET(request: NextRequest) {
             teamId: true
           }
         });
-        
+
         teamIds = teamMemberships.map(tm => tm.teamId);
       }
-      
+
       // Different query based on user role
       if (user.teacher) {
         // For teachers: projects where they are mentor
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
           }
         });
         return NextResponse.json(projects);
-      } 
+      }
       else if (user.student) {
         // For students: projects where they are lead or in the team
         const projects = await prisma.project.findMany({
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
       else {
         return NextResponse.json([]);
       }
-    } 
+    }
     // Default: return all approved/active projects
     else {
       const projects = await prisma.project.findMany({
@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let projectData = {
+    const projectData = {
       title: body.title,
       description: body.description,
       type: body.type,
@@ -296,7 +296,7 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
-      
+
       // First create a team for the project with the student as team lead
       const team = await prisma.team.create({
         data: {
@@ -310,7 +310,7 @@ export async function POST(request: NextRequest) {
           }
         }
       });
-      
+
       // Create project with student as team lead, specified mentor, and connect to the team
       const project = await prisma.project.create({
         data: {
@@ -358,14 +358,14 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      
+
       if (user.student && !body.mentorId) {
         return NextResponse.json(
           { error: 'Student must specify a mentor for the project' },
           { status: 400 }
         );
       }
-      
+
       return NextResponse.json(
         { error: 'Invalid project creation request. Could not determine creation mode.' },
         { status: 400 }

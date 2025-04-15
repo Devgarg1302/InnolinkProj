@@ -15,7 +15,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
+  
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,8 +49,8 @@ export default function ForgotPasswordPage() {
       }
 
       setIsSuccess(true);
-    } catch (error) {
-      setError('An error occurred. Please try again.');
+    } catch (e) {
+      setError(`An error occurred. Please try again. ${e}`);
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
           Reset your password
         </h2>
         <p className="mt-2 text-center text-sm text-gray-700 font-medium">
-          Enter your email address and we'll send you a link to reset your password.
+          Enter your email address and we will send you a link to reset your password.
         </p>
       </div>
 

@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
+import type { StudentProfile } from '@/app/types/profile';
+import { useSession } from 'next-auth/react';
 
 const studentProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -33,15 +35,17 @@ const studentProfileSchema = z.object({
 
 type StudentProfileForm = z.infer<typeof studentProfileSchema>;
 
-export default function StudentProfile() {
-  const [isEditing, setIsEditing] = useState(false);
+const StudentProfile = () => {
+
   const [isLoading, setIsLoading] = useState(true);
+  const [profileData, setProfileData] = useState<StudentProfile | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [toast, setToast] = useState<{ title: string; description: string; variant?: 'destructive' } | null>(null);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting: formIsSubmitting },
     setValue,
     watch,
     reset,
@@ -56,13 +60,11 @@ export default function StudentProfile() {
         if (!response.ok) throw new Error('Failed to fetch profile');
         const data = await response.json();
 
-        Object.entries(data).forEach(([key, value]) => {
-          setValue(key as keyof StudentProfileForm, value as any);
-        });
+        setProfileData(data);
       } catch (error) {
         setToast({
           title: 'Error',
-          description: 'Failed to load profile data',
+          description: 'Failed to load profile data' + (error instanceof Error ? error.message : ''),
           variant: 'destructive',
         });
       } finally {
@@ -71,7 +73,36 @@ export default function StudentProfile() {
     };
 
     fetchProfile();
-  }, [setValue]);
+  }, []);
+
+  useEffect(() => {
+    if (profileData) {
+      Object.entries(profileData).forEach(([key, value]) => {
+        const fieldKey = key as keyof StudentProfileForm;
+        
+        // Type check and correct assignment based on field type
+        if (fieldKey === 'skills' && Array.isArray(value)) {
+          setValue(fieldKey, value as string[]);
+        } else if (fieldKey === 'experiences' && Array.isArray(value)) {
+          setValue(fieldKey, value);
+        } else if (fieldKey === 'certifications' && Array.isArray(value)) {
+          setValue(fieldKey, value);
+        } else if (fieldKey === 'name' && typeof value === 'string') {
+          setValue(fieldKey, value);
+        } else if (fieldKey === 'email' && typeof value === 'string') {
+          setValue(fieldKey, value);
+        } else if (fieldKey === 'bio' && (typeof value === 'string' || value === null)) {
+          setValue(fieldKey, value === null ? undefined : value);
+        } else if (fieldKey === 'department' && typeof value === 'string') {
+          setValue(fieldKey, value);
+        } else if (fieldKey === 'year' && typeof value === 'number') {
+          setValue(fieldKey, value);
+        } else if (fieldKey === 'rollNumber' && typeof value === 'string') {
+          setValue(fieldKey, value);
+        }
+      });
+    }
+  }, [profileData, setValue]);
 
   const onSubmit = async (data: StudentProfileForm) => {
     try {
@@ -91,7 +122,7 @@ export default function StudentProfile() {
     } catch (error) {
       setToast({
         title: 'Error',
-        description: 'Failed to update profile',
+        description: 'Failed to update profile' + (error instanceof Error ? error.message : ''),
         variant: 'destructive',
       });
     }
@@ -339,7 +370,7 @@ export default function StudentProfile() {
                         </div>
                         <button
                           type="button"
-                          onClick={(e) => {
+                          onClick={() => {
                             const input = document.getElementById('newSkill') as HTMLInputElement;
                             if (input.value.trim()) {
                               const currentSkills = watch('skills') || [];
@@ -708,10 +739,10 @@ export default function StudentProfile() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={formIsSubmitting}
                   className="px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-md hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md"
                 >
-                  {isSubmitting ? (
+                  {formIsSubmitting ? (
                     <span className="flex items-center">
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Saving...
@@ -736,4 +767,6 @@ export default function StudentProfile() {
       )}
     </div>
   );
-} 
+};
+
+export default StudentProfile; 

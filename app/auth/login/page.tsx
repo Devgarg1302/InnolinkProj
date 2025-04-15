@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -58,7 +58,7 @@ export default function LoginPage() {
         formState: { errors },
     } = useForm<FormData>();
 
-    const onSubmit = async (data: FormData) => {
+    const onSubmit = async () => {
         try {
             setIsLoading(true);
             setError(null);
@@ -80,7 +80,7 @@ export default function LoginPage() {
             }
 
         } catch (error) {
-            setError('An error occurred. Please try again.');
+            setError(`An error occurred. Please try again.${error}`);
         } finally {
             setIsLoading(false);
         }
@@ -107,7 +107,7 @@ export default function LoginPage() {
                 router.refresh();
             }
         } catch (err) {
-            setError("Invalid OTP!");
+            setError(`Invalid OTP!${err}`);
         }
 
         setIsLoading(false);
@@ -132,7 +132,7 @@ export default function LoginPage() {
                 setError(null);
             }
         } catch (error) {
-            setError('Failed to resend OTP. Please try again.');
+            setError(`Failed to resend OTP. Please try again. ${error}`);
         } finally {
             setIsLoading(false);
         }
@@ -362,7 +362,7 @@ export default function LoginPage() {
                                         </svg>
                                     </div>
                                     <div className="ml-3 flex-1">
-                                        <p className="text-sm text-blue-800 font-medium">We've sent a verification code to your email.</p>
+                                        <p className="text-sm text-blue-800 font-medium">We have sent a verification code to your email.</p>
                                     </div>
                                 </div>
                             </div>
@@ -431,7 +431,7 @@ export default function LoginPage() {
                                     {countdown > 0 ? (
                                         <p>Resend OTP available in {Math.floor(countdown / 60)}:{countdown % 60 < 10 ? `0${countdown % 60}` : countdown % 60}</p>
                                     ) : (
-                                        <p>Didn't receive the code?</p>
+                                        <p>Did not receive the code?</p>
                                     )}
                                 </div>
                                 <button

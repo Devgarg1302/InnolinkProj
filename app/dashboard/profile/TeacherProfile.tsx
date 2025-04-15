@@ -68,12 +68,31 @@ export default function TeacherProfile() {
         const data = await response.json();
         
         Object.entries(data).forEach(([key, value]) => {
-          setValue(key as keyof TeacherProfileForm, value as any);
+          const fieldKey = key as keyof TeacherProfileForm;
+          
+          // Type check and correct assignment based on field type
+          if (fieldKey === 'skills' && Array.isArray(value)) {
+            setValue(fieldKey, value as string[]);
+          } else if (fieldKey === 'experiences' && Array.isArray(value)) {
+            setValue(fieldKey, value);
+          } else if (fieldKey === 'certifications' && Array.isArray(value)) {
+            setValue(fieldKey, value);
+          } else if (fieldKey === 'name' && typeof value === 'string') {
+            setValue(fieldKey, value);
+          } else if (fieldKey === 'email' && typeof value === 'string') {
+            setValue(fieldKey, value);
+          } else if (fieldKey === 'bio' && (typeof value === 'string' || value === null)) {
+            setValue(fieldKey, value === null ? undefined : value);
+          } else if (fieldKey === 'department' && typeof value === 'string') {
+            setValue(fieldKey, value);
+          } else if (fieldKey === 'designation' && typeof value === 'string') {
+            setValue(fieldKey, value);
+          }
         });
       } catch (error) {
         setToast({
           title: 'Error',
-          description: 'Failed to load profile data',
+          description: 'Failed to load profile data' + (error instanceof Error ? error.message : ''),
           variant: 'destructive',
         });
       } finally {
@@ -103,7 +122,7 @@ export default function TeacherProfile() {
     } catch (error) {
       setToast({
         title: 'Error',
-        description: 'Failed to update profile',
+        description: 'Failed to update profile' + (error instanceof Error ? error.message : ''),
         variant: 'destructive',
       });
     }
@@ -328,7 +347,7 @@ export default function TeacherProfile() {
                         </div>
                         <button
                           type="button"
-                          onClick={(e) => {
+                          onClick={() => {
                             const input = document.getElementById('newSkill') as HTMLInputElement;
                             if (input.value.trim()) {
                               const currentSkills = watch('skills') || [];

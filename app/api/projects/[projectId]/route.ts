@@ -138,7 +138,7 @@ export async function PUT(
         // Create transaction to handle all updates
         const updatedProject = await prisma.$transaction(async (tx) => {
             // 1. Update basic project info
-            const projectUpdate = await tx.project.update({
+            await tx.project.update({
                 where: { id: params.projectId },
                 data: {
                     title: body.title,

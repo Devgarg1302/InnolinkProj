@@ -210,7 +210,7 @@ export default function Home() {
                 </div>
                 <h3 className="mt-4 text-lg font-medium text-gray-900">Project Gallery</h3>
                 <p className="mt-2 text-base text-gray-500">
-                  Upload images, videos, and other media to showcase your project's progress
+                  Upload images, videos, and other media to showcase your projects progress
                 </p>
               </div>
 

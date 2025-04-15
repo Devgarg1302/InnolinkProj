@@ -2,7 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authoptions } from "@/app/lib/auth";
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
 import ProjectEditForm from "../ProjectEditForm";
 import BackButton from "../../../profile/[id]/BackButton"
 

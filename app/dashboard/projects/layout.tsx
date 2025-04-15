@@ -21,7 +21,7 @@ export default function ProjectsLayout({
     const [showSuggestions, setShowSuggestions] = useState(false);
 
     // Fetch suggestions using React Query
-    const { data: suggestions = [], isLoading: isLoadingSuggestions } = useQuery({
+    const { data: suggestions = [] } = useQuery({
         queryKey: ['suggestions', searchTerm, filterType],
         queryFn: async () => {
             if (!searchTerm || searchTerm.length < 2) return [];

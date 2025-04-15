@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { ProjectType } from '@prisma/client';
@@ -85,14 +85,23 @@ export default function ProjectEditForm({ project }: { project: Project }) {
   };
   
   // Handle research paper changes
-  const handlePaperChange = (index: number, field: keyof ResearchPaper, value: any) => {
+  const handlePaperChange = (index: number, field: keyof ResearchPaper, value: string | string[] | null) => {
     const updatedPapers = [...researchPapers];
     
-    if (field === 'authors' && typeof value === 'string') {
-      // Convert comma-separated string to array for authors
-      updatedPapers[index][field] = value.split(',').map(a => a.trim());
-    } else {
-      (updatedPapers[index] as any)[field] = value;
+    if (field === 'authors') {
+      if (typeof value === 'string') {
+        // Convert comma-separated string to array for authors
+        updatedPapers[index][field] = value.split(',').map(a => a.trim());
+      } else {
+        // It's already an array
+        updatedPapers[index][field] = value as string[];
+      }
+    } else if (field === 'abstract' || field === 'publishedAt') {
+      // Handle nullable fields
+      updatedPapers[index][field] = value as string | null;
+    } else if (field === 'title' || field === 'url' || field === 'id') {
+      // Handle string fields
+      updatedPapers[index][field] = value as string;
     }
     
     setResearchPapers(updatedPapers);
@@ -124,9 +133,17 @@ export default function ProjectEditForm({ project }: { project: Project }) {
   };
   
   // Handle media changes
-  const handleMediaChange = (index: number, field: keyof Media, value: any) => {
+  const handleMediaChange = (index: number, field: keyof Media, value: string | null) => {
     const updatedMedia = [...media];
-    (updatedMedia[index] as any)[field] = value;
+    
+    if (field === 'title' || field === 'description') {
+      // Handle nullable string fields
+      updatedMedia[index][field] = value;
+    } else if (field === 'type' || field === 'url' || field === 'id') {
+      // Handle non-nullable string fields
+      updatedMedia[index][field] = value as string;
+    }
+    
     setMedia(updatedMedia);
   };
   

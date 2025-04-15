@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
 
 type Connection = {
   id: string;
@@ -14,7 +13,7 @@ type Connection = {
 };
 
 export default function ConnectionsPage() {
-  const { data: session } = useSession();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'students' | 'teachers'>('all');
   

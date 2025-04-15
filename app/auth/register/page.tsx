@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { signOut, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 
 
 const baseSchema = z.object({
@@ -64,7 +64,6 @@ export default function RegisterPage() {
         register,
         handleSubmit,
         formState: { errors },
-        watch,
         setValue,
     } = useForm<FormData>({
         resolver: zodResolver(formSchema),
@@ -97,7 +96,7 @@ export default function RegisterPage() {
 
             router.replace('/auth/login?registered=true');
         } catch (error) {
-            setError('An error occurred. Please try again.');
+            setError(`'An error occurred. Please try again.'${error}`);
         } finally {
             setIsLoading(false);
         }

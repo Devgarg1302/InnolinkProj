@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { UserRole, RegisterUserData } from '@/app/types/auth';
 
 const prisma = new PrismaClient();
 
@@ -22,33 +23,33 @@ export async function POST(request: Request) {
         // Create user and profile in a transaction
         const result = await prisma.$transaction(async (tx) => {
             // 1. Create base user
-            const user = await tx.user.create({
-                data: {
-                    email,
-                    username,
-                    password: hashedPassword,
-                    department: profileData?.department || null,
-                    role,
+            const userData: RegisterUserData = {
+                email,
+                username,
+                password: hashedPassword,
+                department: profileData?.department || null,
+                role: role as UserRole,
+            };
 
-                    ...(role === 'STUDENT'
-                        ? {
-                            student: {
-                                create: {
-                                    year: profileData?.year || null,
-                                    rollNumber: profileData?.rollNumber || null,
-                                    skills: []
-                                }
-                            }
-                        }
-                        : {
-                            teacher: {
-                                create: {
-                                    designation: profileData?.designation || null,
-                                    skills: []
-                                }
-                            }
-                        })
-                } as any
+            if (role === 'STUDENT') {
+                userData.student = {
+                    create: {
+                        year: profileData?.year || null,
+                        rollNumber: profileData?.rollNumber || null,
+                        skills: []
+                    }
+                };
+            } else {
+                userData.teacher = {
+                    create: {
+                        designation: profileData?.designation || null,
+                        skills: []
+                    }
+                };
+            }
+
+            const user = await tx.user.create({
+                data: userData
             });
 
             return user;
