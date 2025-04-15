@@ -41,11 +41,11 @@ export default function DashboardLayout({
 
     // Navigation items
     const navigation = [
-        { name: 'Dashboard', href: '/dashboard' },
-        { name: 'My Projects', href: '/dashboard/projects' },
-        { name: 'Notifications', href: '/dashboard/notifications' },
-        { name: 'Profile', href: '/dashboard/profile' },
-        { name: 'Connections', href: '/dashboard/connections' },
+        { name: 'Dashboard', href: '/dashboard', isActive: pathname === '/dashboard' },
+        { name: 'My Projects', href: '/dashboard/projects', isActive: pathname.startsWith('/dashboard/projects') },
+        { name: 'Notifications', href: '/dashboard/notifications', isActive: pathname === '/dashboard/notifications' },
+        { name: 'Profile', href: '/dashboard/profile', isActive: pathname === '/dashboard/profile' },
+        { name: 'Connections', href: '/dashboard/connections', isActive: pathname === '/dashboard/connections' },
     ];
 
     return (
@@ -68,9 +68,7 @@ export default function DashboardLayout({
                                     <Link
                                         key={item.name}
                                         href={item.href}
-                                        className={`${pathname === item.href || pathname.startsWith(`${item.href}/`)
-                                            ? 'border-blue-500 text-gray-900'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        className={`${item.isActive ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                             } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                                     >
                                         {item.name}
@@ -111,9 +109,7 @@ export default function DashboardLayout({
                         <Link
                             key={item.name}
                             href={item.href}
-                            className={`${pathname === item.href || pathname.startsWith(`${item.href}/`)
-                                ? 'text-blue-600'
-                                : 'text-gray-500'
+                            className={`${item.isActive ? 'text-blue-600' : 'text-gray-500'
                                 } flex flex-col items-center py-1`}
                         >
                             {/* Simple icon placeholders */}

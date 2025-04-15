@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 
 export default function ProjectsLayout({
     children,
@@ -17,8 +18,21 @@ export default function ProjectsLayout({
     const statusFilter = searchParams.get('status') || 'all';
     const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
     const [filterType, setFilterType] = useState(searchParams.get('filterType') || 'project');
-    const [suggestions, setSuggestions] = useState<string[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+
+    // Fetch suggestions using React Query
+    const { data: suggestions = [], isLoading: isLoadingSuggestions } = useQuery({
+        queryKey: ['suggestions', searchTerm, filterType],
+        queryFn: async () => {
+            if (!searchTerm || searchTerm.length < 2) return [];
+            const response = await fetch(`/api/projects/suggestions?term=${encodeURIComponent(searchTerm)}&type=${filterType}`);
+            if (!response.ok) throw new Error('Failed to fetch suggestions');
+            return response.json();
+        },
+        enabled: searchTerm.length >= 2,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes
+    });
 
     // Apply filters and search
     const applyFilters = () => {
@@ -75,38 +89,10 @@ export default function ProjectsLayout({
         }
     }, [searchParams]);
 
-    // Fetch suggestions based on search term and filter type
-    useEffect(() => {
-        const fetchSuggestions = async () => {
-            if (!searchTerm || searchTerm.length < 2) {
-                setSuggestions([]);
-                setShowSuggestions(false);
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/projects/suggestions?term=${encodeURIComponent(searchTerm)}&type=${filterType}`);
-                if (!response.ok) throw new Error('Failed to fetch suggestions');
-
-                const data = await response.json();
-                setSuggestions(data);
-                setShowSuggestions(true);
-            } catch (error) {
-                console.error('Error fetching suggestions:', error);
-                setSuggestions([]);
-                setShowSuggestions(false);
-            }
-        };
-
-        const debounceTimer = setTimeout(fetchSuggestions, 300);
-        return () => clearTimeout(debounceTimer);
-    }, [searchTerm, filterType]);
-
     // Handle suggestion selection
     const handleSuggestionClick = (suggestion: string) => {
         setSearchTerm(suggestion);
         setShowSuggestions(false);
-        setSuggestions([]);
     };
 
     // Handle input focus/blur
@@ -117,7 +103,6 @@ export default function ProjectsLayout({
     };
 
     const handleInputBlur = () => {
-        // Delay hiding suggestions to allow click events to fire
         setTimeout(() => {
             setShowSuggestions(false);
         }, 200);
@@ -188,7 +173,6 @@ export default function ProjectsLayout({
                                         className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
                                         onClick={() => {
                                             setSearchTerm('');
-                                            setSuggestions([]);
                                             setShowSuggestions(false);
                                         }}
                                     >
@@ -199,8 +183,8 @@ export default function ProjectsLayout({
                                 )}
                                 {/* Suggestions Dropdown */}
                                 {showSuggestions && suggestions.length > 0 && (
-                                    <div className="absolute z-10  w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-60  overflow-auto">
-                                        {suggestions.map((suggestion, index) => (
+                                    <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-60 overflow-auto">
+                                        {suggestions.map((suggestion: string, index: number) => (
                                             <button
                                                 key={index}
                                                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useQuery } from '@tanstack/react-query';
 
 type User = {
   username: string;
@@ -74,44 +75,21 @@ export default function DashboardProjectsPage() {
   const searchTerm = searchParams.get('search') || '';
   const filterType = searchParams.get('filterType') || 'project';
   
-  const [projects, setProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Fetch projects based on the status filter
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setLoading(true);
-        
-        // Get projects based on statusFilter (my or all)
-        const response = await fetch(`/api/projects?status=${statusFilter}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch projects');
-        }
-        
-        const data = await response.json();
-        setProjects(data);
-        
-        // Apply search term filter if provided
-        if (searchTerm) {
-          const filtered = filterProjectsBySearchTerm(data, searchTerm, filterType);
-          setFilteredProjects(filtered);
-        } else {
-          setFilteredProjects(data);
-        }
-      } catch (err) {
-        console.error('Error fetching projects:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
+  // Fetch projects using React Query
+  const { data: projects = [], isLoading, error } = useQuery<Project[]>({
+    queryKey: ['projects', statusFilter],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects?status=${statusFilter}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch projects');
       }
-    };
-    
-    fetchProjects();
-  }, [statusFilter]);
+      return response.json();
+    },
+    staleTime: Infinity, // Data stays fresh for 5 minutes
+    gcTime: Infinity, // Cache persists for 10 minutes
+  });
 
   // Filter projects based on search params
   useEffect(() => {
@@ -201,7 +179,7 @@ export default function DashboardProjectsPage() {
   };
 
   // Content
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -212,7 +190,7 @@ export default function DashboardProjectsPage() {
   if (error && filteredProjects.length === 0) {
     return (
       <div className="bg-red-50 p-4 rounded-md">
-        <p className="text-red-700">{error}</p>
+        <p className="text-red-700">{error instanceof Error ? error.message : 'An error occurred'}</p>
       </div>
     );
   }
