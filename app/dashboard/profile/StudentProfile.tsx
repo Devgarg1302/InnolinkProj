@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
 import type { StudentProfile } from '@/app/types/profile';
-import { useSession } from 'next-auth/react';
 
 const studentProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
