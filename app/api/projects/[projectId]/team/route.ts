@@ -6,8 +6,11 @@ import { authoptions } from '@/app/lib/auth';
 // Add a team member to a project
 export async function POST(
     request: NextRequest,
-    { params }: { params: { projectId: string } }
+    { params }: { params: Promise<{ projectId: string }> }
 ) {
+
+    const projectId = (await params).projectId;
+
     try {
         const session = await getServerSession(authoptions);
         if (!session) {
@@ -29,7 +32,7 @@ export async function POST(
 
         // Get the project with its team, lead and mentor details
         const project = await prisma.project.findUnique({
-            where: { id: params.projectId },
+            where: { id: projectId },
             include: {
                 lead: true,
                 mentor: true,
@@ -46,15 +49,15 @@ export async function POST(
         const isTeamLead = project.leadId === user.student?.id;
 
         if (!isMentor && !isTeamLead) {
-            return NextResponse.json({ 
-                error: 'Only the project mentor or lead can manage team members' 
+            return NextResponse.json({
+                error: 'Only the project mentor or lead can manage team members'
             }, { status: 403 });
         }
 
         // Use the existing team - we don't need to create a new one since
         // teams are now created when the project is created
         const teamId = project.teamId;
-        
+
         if (!teamId) {
             return NextResponse.json(
                 { error: 'Project does not have a team' },
@@ -102,9 +105,9 @@ export async function POST(
                 });
                 return NextResponse.json(updatedMember);
             }
-            
+
             return NextResponse.json(
-                { error: 'Student is already a member of this team' }, 
+                { error: 'Student is already a member of this team' },
                 { status: 400 }
             );
         }
@@ -132,8 +135,10 @@ export async function POST(
 // Remove a team member from a project
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { projectId: string } }
+    { params }: { params: Promise<{ projectId: string }> }
 ) {
+    const projectId = (await params).projectId;
+
     try {
         const session = await getServerSession(authoptions);
         if (!session) {
@@ -155,7 +160,7 @@ export async function DELETE(
 
         // Get the project with its team, lead and mentor details
         const project = await prisma.project.findUnique({
-            where: { id: params.projectId },
+            where: { id: projectId },
             include: {
                 lead: true,
                 mentor: true,
@@ -172,8 +177,8 @@ export async function DELETE(
         const isTeamLead = project.leadId === user.student?.id;
 
         if (!isMentor && !isTeamLead) {
-            return NextResponse.json({ 
-                error: 'Only the project mentor or lead can manage team members' 
+            return NextResponse.json({
+                error: 'Only the project mentor or lead can manage team members'
             }, { status: 403 });
         }
 
@@ -197,15 +202,15 @@ export async function DELETE(
 
         // Check if the team member belongs to this project's team
         if (teamMember.team.id !== project.teamId) {
-            return NextResponse.json({ 
-                error: 'Team member does not belong to this project' 
+            return NextResponse.json({
+                error: 'Team member does not belong to this project'
             }, { status: 400 });
         }
 
         // Don't allow removing the project lead
         if (teamMember.studentId === project.leadId) {
-            return NextResponse.json({ 
-                error: 'Cannot remove the project lead from the team' 
+            return NextResponse.json({
+                error: 'Cannot remove the project lead from the team'
             }, { status: 400 });
         }
 
@@ -215,7 +220,7 @@ export async function DELETE(
             data: { leftAt: new Date() }
         });
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             message: 'Team member removed successfully',
             teamMember: updatedMember
         });

@@ -5,17 +5,12 @@ import { authoptions } from '@/app/lib/auth';
 
 const prisma = new PrismaClient();
 
-interface RouteContext {
-  params: {
-    id: string;
-  };
-}
-
 export async function PUT(
-  request: Request,
-  { params }: RouteContext
+    request: Request,
+    { params }: { params: Promise<{ readId: string }> }
 ) {
     try {
+        const notificationId = (await params).readId;
         const session = await getServerSession(authoptions);
 
         if (!session || !session.user || !session.user.email) {
@@ -30,8 +25,6 @@ export async function PUT(
         if (!user) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
-
-        const notificationId = params.id;
 
         // First verify that the notification belongs to the user
         const notification = await prisma.notification.findUnique({

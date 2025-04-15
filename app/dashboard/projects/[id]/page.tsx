@@ -70,8 +70,10 @@ type ProjectWithRelations = Project & {
 export default async function ProjectDetailsPage({
     params,
 }: {
-    params: { id: string }
+    params: Promise<{ id: string }>
 }) {
+    const id = (await params).id
+
     const session = await getServerSession(authoptions)
     if (!session?.user) {
         return notFound()
@@ -90,7 +92,8 @@ export default async function ProjectDetailsPage({
         return notFound();
     }
 
-    const prismaid = await params.id;
+    const prismaid = await id;
+    
     const project = await prisma.project.findUnique({
         where: { id: prismaid },
         include: {

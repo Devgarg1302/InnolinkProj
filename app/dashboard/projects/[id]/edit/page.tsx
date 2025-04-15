@@ -8,8 +8,9 @@ import BackButton from "../../../profile/[id]/BackButton"
 export default async function EditProjectPage({
     params,
 }: {
-    params: { id: string };
+    params: Promise<{ id: string }>;
 }) {
+    const id = (await params).id;
     const session = await getServerSession(authoptions);
     if (!session?.user) {
         return notFound();
@@ -30,7 +31,7 @@ export default async function EditProjectPage({
 
     // Get the project with all its details
     const project = await prisma.project.findUnique({
-        where: { id: params.id },
+        where: { id: id },
         include: {
             lead: {
                 include: {
@@ -67,7 +68,7 @@ export default async function EditProjectPage({
     const isProjectApproved = project.status === "APPROVED";
 
     if (!isMentor && !isTeamLead || !isProjectApproved) {
-        return redirect(`/dashboard/projects/${params.id}`);
+        return redirect(`/dashboard/projects/${id}`);
     }
 
     // Format dates for client component

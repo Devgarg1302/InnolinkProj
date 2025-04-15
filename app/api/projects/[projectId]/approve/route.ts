@@ -6,8 +6,11 @@ import { sendProjectNotificationEmail } from '@/app/lib/mail';
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { projectId: string } }
+    { params }: { params: Promise<{ projectId: string }> }
 ) {
+
+    const projectId = (await params).projectId;
+
     try {
         const session = await getServerSession(authoptions);
         if (!session) {
@@ -47,7 +50,7 @@ export async function POST(
 
         // Get the project with its lead and mentor details
         const project = await prisma.project.findUnique({
-            where: { id: params.projectId },
+            where: { id: projectId },
             include: {
                 lead: {
                     include: {
@@ -76,7 +79,7 @@ export async function POST(
 
         // Update project status
         const updatedProject = await prisma.project.update({
-            where: { id: params.projectId },
+            where: { id: projectId },
             data: {
                 status: status as 'APPROVED' | 'REJECTED',
             }

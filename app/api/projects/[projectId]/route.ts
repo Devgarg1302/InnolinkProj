@@ -5,8 +5,10 @@ import { authoptions } from '@/app/lib/auth';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { projectId: string } }
+    { params }: { params: Promise<{ projectId: string }> }
 ) {
+    const projectId = (await params).projectId;
+
     try {
         const session = await getServerSession(authoptions);
         if (!session) {
@@ -14,7 +16,7 @@ export async function GET(
         }
 
         const project = await prisma.project.findUnique({
-            where: { id: params.projectId },
+            where: { id: projectId },
             include: {
                 lead: {
                     include: {
@@ -78,8 +80,9 @@ export async function GET(
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { projectId: string } }
+    { params }: { params: Promise<{ projectId: string }> }
 ) {
+    const projectId = (await params).projectId;
     try {
         const session = await getServerSession(authoptions);
         if (!session) {
@@ -101,7 +104,7 @@ export async function PUT(
 
         // Get the project with its details
         const project = await prisma.project.findUnique({
-            where: { id: params.projectId },
+            where: { id: projectId },
             include: {
                 lead: true,
                 mentor: true,
@@ -139,7 +142,7 @@ export async function PUT(
         const updatedProject = await prisma.$transaction(async (tx) => {
             // 1. Update basic project info
             await tx.project.update({
-                where: { id: params.projectId },
+                where: { id: projectId },
                 data: {
                     title: body.title,
                     description: body.description,
@@ -166,9 +169,9 @@ export async function PUT(
                     if (paper.id) {
                         // Update existing paper
                         await tx.researchPaper.update({
-                            where: { 
+                            where: {
                                 id: paper.id,
-                                projectId: params.projectId // Ensure paper belongs to this project
+                                projectId: projectId // Ensure paper belongs to this project
                             },
                             data: {
                                 title: paper.title,
@@ -187,7 +190,7 @@ export async function PUT(
                                 abstract: paper.abstract,
                                 url: paper.url,
                                 publishedAt: paper.publishedAt ? new Date(paper.publishedAt) : null,
-                                projectId: params.projectId
+                                projectId: projectId
                             }
                         });
                     }
@@ -199,7 +202,7 @@ export async function PUT(
                         await tx.researchPaper.deleteMany({
                             where: {
                                 id: paperId,
-                                projectId: params.projectId // Security: Ensure paper belongs to this project
+                                projectId: projectId // Security: Ensure paper belongs to this project
                             }
                         });
                     }
@@ -218,9 +221,9 @@ export async function PUT(
                     if (item.id) {
                         // Update existing media
                         await tx.media.update({
-                            where: { 
+                            where: {
                                 id: item.id,
-                                projectId: params.projectId // Ensure media belongs to this project
+                                projectId: projectId // Ensure media belongs to this project
                             },
                             data: {
                                 title: item.title,
@@ -237,7 +240,7 @@ export async function PUT(
                                 type: item.type,
                                 url: item.url,
                                 description: item.description,
-                                projectId: params.projectId
+                                projectId: projectId
                             }
                         });
                     }
@@ -249,7 +252,7 @@ export async function PUT(
                         await tx.media.deleteMany({
                             where: {
                                 id: mediaId,
-                                projectId: params.projectId // Security: Ensure media belongs to this project
+                                projectId: projectId // Security: Ensure media belongs to this project
                             }
                         });
                     }
@@ -258,7 +261,7 @@ export async function PUT(
 
             // Fetch the updated project with all its relations
             return await tx.project.findUnique({
-                where: { id: params.projectId },
+                where: { id: projectId },
                 include: {
                     lead: {
                         include: {
@@ -313,14 +316,14 @@ export async function PUT(
             const memberIds = updatedProject.team.members
                 .filter(member => !member.leftAt)
                 .map(member => member.studentId);
-            
+
             if (memberIds.length > 0) {
                 // Fetch full user records for all team members
                 const teamMembers = await prisma.student.findMany({
                     where: { id: { in: memberIds } },
                     include: { user: true }
                 });
-                
+
                 // Create notifications for all active team members
                 for (const member of teamMembers) {
                     await prisma.notification.create({
@@ -347,8 +350,10 @@ export async function PUT(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { projectId: string } }
+    { params }: { params: Promise<{ projectId: string }> }
 ) {
+    const projectId = (await params).projectId;
+
     try {
         const session = await getServerSession(authoptions);
         if (!session) {
@@ -370,7 +375,7 @@ export async function DELETE(
 
         // Get the project with its lead and mentor details
         const project = await prisma.project.findUnique({
-            where: { id: params.projectId },
+            where: { id: projectId },
             include: {
                 lead: true,
                 mentor: true
@@ -387,18 +392,18 @@ export async function DELETE(
         const isTeamLead = project.leadId === user.student?.id;
 
         if (!isTeacher && !isMentor && !isTeamLead) {
-            return NextResponse.json({ 
-                error: 'Only the project mentor, team lead, or a teacher can delete this project' 
+            return NextResponse.json({
+                error: 'Only the project mentor, team lead, or a teacher can delete this project'
             }, { status: 403 });
         }
 
         // Delete project and all related records (Prisma cascades the deletion for relations with onDelete: Cascade)
         await prisma.project.delete({
-            where: { id: params.projectId }
+            where: { id: projectId }
         });
 
         return NextResponse.json({ message: 'Project deleted successfully' });
-        
+
     } catch (error) {
         console.error('Error deleting project:', error);
         return NextResponse.json(

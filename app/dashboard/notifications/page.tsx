@@ -44,11 +44,11 @@ export default function NotificationsPage() {
     return true;
   });
 
-  const markAsRead = async (id: string) => {
+  const markAsRead = async (readId: string) => {
     try {
-      await axios.put(`/api/notifications/${id}/read`);
+      await axios.put(`/api/notifications/${readId}/read`);
       setNotifications(notifications.map(notification =>
-        notification.id === id ? { ...notification, read: true } : notification
+        notification.id === readId ? { ...notification, read: true } : notification
       ));
     } catch (error) {
       console.error('Error marking notification as read:', error);

@@ -6,11 +6,21 @@ import Link from "next/link";
 import Image from "next/image";
 import BackButton from "./BackButton";
 
+// Add Project interface
+interface Project {
+    id: string;
+    title: string;
+    description: string;
+    status: string;
+    type: string | null;
+}
+
 export default async function UserProfilePage({
     params,
 }: {
-    params: { id: string };
+    params: Promise<{ id: string }>;
 }) {
+    const id = (await params).id;
     const session = await getServerSession(authoptions);
     if (!session?.user) {
         return notFound();
@@ -18,7 +28,7 @@ export default async function UserProfilePage({
 
     // Get the user profile data
     const user = await prisma.user.findUnique({
-        where: { id: params.id },
+        where: { id: id },
         include: {
             student: true,
             teacher: true,
@@ -250,7 +260,7 @@ export default async function UserProfilePage({
 
                             {projects.length > 0 ? (
                                 <div className="space-y-4">
-                                    {projects.map((project) => (
+                                    {projects.map((project: Project) => (
                                         <Link
                                             key={project.id}
                                             href={`/dashboard/projects/${project.id}`}
