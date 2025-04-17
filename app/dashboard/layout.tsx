@@ -79,7 +79,9 @@ export default function DashboardLayout({
                         <div className="flex items-center">
                             <div className="flex-shrink-0">
                                 <button
-                                    onClick={() => signOut()}
+                                    onClick={() => signOut({ redirect: false }).then(() => {
+                                        window.location.href = "/auth/login";
+                                    })}
                                     className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
                                 >
                                     Sign Out
